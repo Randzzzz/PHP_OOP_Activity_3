@@ -27,7 +27,7 @@
             <img src="https://images.unsplash.com/photo-1577900258307-26411733b430?q=80&w=1170&auto=format&fit=crop"
                 class="rounded-md w-full h-48 object-cover mb-4 shadow">
             <p class="text-gray-700 text-center">
-              Content writers create clear, engaging, and informative content...
+              Content writers create clear, engaging, and informative content by researching topics, writing across different formats, and optimizing material for readability.
             </p>
           </div>
 
@@ -36,7 +36,7 @@
             <img src="https://plus.unsplash.com/premium_photo-1661582394864-ebf82b779eb0?q=80&w=1170&auto=format&fit=crop"
                 class="rounded-md w-full h-48 object-cover mb-4 shadow">
             <p class="text-gray-700 text-center">
-              Admin writers play a key role in content team development...
+              Admin writers play a key role in content team development by managing, reviewing drafts, and ensuring consistency across all deliverables.
             </p>
           </div>
         </div>
