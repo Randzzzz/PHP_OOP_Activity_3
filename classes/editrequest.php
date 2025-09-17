@@ -92,7 +92,8 @@ class EditRequest extends Database {
         $sql = "SELECT shared_articles.*, articles.*, users.first_name, users.last_name FROM shared_articles
                 JOIN articles ON shared_articles.article_id = articles.article_id
                 JOIN users ON articles.author_id = users.user_id
-                WHERE shared_articles.shared_with = ?";
+                WHERE shared_articles.shared_with = ?
+                ORDER BY shared_articles.created_at DESC";
         return $this->executeQuery($sql, [$writer_id]);
     }
 }

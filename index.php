@@ -1,4 +1,6 @@
-<?php require_once 'classes/classloader.php'; ?>
+<?php require_once 'classes/classloader.php';
+$categories = $categoryObj->getAllCategories();
+?>
 <!doctype html>
 <html lang="en">
 <head>
@@ -50,7 +52,22 @@
             <?php $articles = $articleObj->getActiveArticles(); ?>
             <?php foreach ($articles as $article) { ?>
               <div class="border border-gray-200 rounded-lg shadow-sm bg-gradient-to-r from-[#fff] to-[#e7e9e2] mt-6 p-6">
-                <h1 class="text-xl font-bold mb-2"><?php echo $article['title']; ?></h1>
+                <h1 class="text-xl font-bold mb-2"><?php echo $article['title']; ?>
+                <?php
+                      
+                      $categoryName = '';
+                      foreach ($categories as $category) {
+                        if ($category['category_id'] == $article['category_id']) {
+                          $categoryName = $category['name'];
+                          break;
+                        }
+                      }
+                    ?>
+                    <span class="font-semibold text-lg text-[#4b5b40]">| 
+                      <?php echo htmlspecialchars($categoryName); ?>
+                    </span>
+                  </h1>
+                
                 <?php if (!empty($article['image_url'])) { ?>
                   <img src="/intro_PHP_OOP_3/<?php echo htmlspecialchars($article['image_url']); ?>"
                       alt="Article image"

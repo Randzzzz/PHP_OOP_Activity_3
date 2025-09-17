@@ -12,6 +12,7 @@ $articles = $articleObj->getArticles();
 $studentArticles = array_filter($articles, function($a) {
   return isset($a['role']) && $a['role'] !== 'admin' && isset($a['is_active']) && $a['is_active'] == 0; // Only show articles that are pending (is_active = 0)
 });
+$categories = $categoryObj->getAllCategories();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,6 +52,19 @@ $studentArticles = array_filter($articles, function($a) {
                 <div class="flex items-center gap-2 mb-2">
                   <span class="inline-flex items-center px-2 py-1 bg-[#cdd4c6] text-[#283123] rounded text-xs font-bold mr-2">✒️ Writer</span>
                   <span class="font-semibold text-lg"><?php echo htmlspecialchars($article['title']); ?></span>
+                  <?php
+                      
+                      $categoryName = '';
+                      foreach ($categories as $category) {
+                        if ($category['category_id'] == $article['category_id']) {
+                          $categoryName = $category['name'];
+                          break;
+                        }
+                      }
+                    ?>
+                    <span class="font-semibold text-lg text-[#4b5b40]">| 
+                      <?php echo htmlspecialchars($categoryName); ?>
+                    </span>
                 </div>
                 <?php if (!empty($article['image_url'])) { ?>
                   <img src="/intro_PHP_OOP_3/<?php echo htmlspecialchars($article['image_url']); ?>" alt="Article image" class="w-fit max-h-60 mx-auto object-cover rounded mb-3 border border-gray-300">

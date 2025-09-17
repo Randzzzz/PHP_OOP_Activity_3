@@ -1,3 +1,4 @@
+
 <?php
 require_once '../classes/classloader.php';
 if (!$userObj->isLoggedIn()) {
@@ -7,12 +8,15 @@ if (!$userObj->isLoggedIn()) {
 if (!$userObj->isAdmin()) {
   header("Location: ../writer/index.php");
 }
+
 $articles = $articleObj->getArticles();
 $allEditRequests = $editRequestObj->getAllPendingRequests();
 $editRequestsByArticle = [];
 foreach ($allEditRequests as $req) {
   $editRequestsByArticle[$req['article_id']][] = $req;
 }
+$categories = $categoryObj->getAllCategories();
+$selectedCategory = isset($_GET['category']) ? intval($_GET['category']) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -38,13 +42,32 @@ foreach ($allEditRequests as $req) {
           </div>
 
           <div class="bg-white rounded-xl shadow p-6">
-            <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">🗂️ Articles List</h2>
-            <?php if (empty($articles)) { ?>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-2xl font-semibold flex items-center gap-2">🗂️ Articles List</h2>
+              <form method="get" class="flex items-center gap-2">
+                <label for="category" class="text-sm font-medium text-gray-700">Category:</label>
+                <select name="category" id="category" class="border border-gray-300 rounded-md p-2" onchange="this.form.submit()">
+                  <option value="0">All</option>
+                  <?php foreach ($categories as $category) { ?>
+                    <option value="<?php echo $category['category_id']; ?>" <?php if ($selectedCategory == $category['category_id']) echo 'selected'; ?>><?php echo htmlspecialchars($category['name']); ?></option>
+                  <?php } ?>
+                </select>
+              </form>
+            </div>
+            <?php
+              // Filter articles by selected category if not 'All'
+              $filteredArticles = $articles;
+              if ($selectedCategory > 0) {
+                $filteredArticles = array_filter($articles, function($a) use ($selectedCategory) {
+                  return $a['category_id'] == $selectedCategory;
+                });
+              }
+            ?>
+            <?php if (empty($filteredArticles)) { ?>
               <p class="text-gray-500">No articles found.</p>
             <?php } else { ?>
-
               <div class="space-y-6">
-              <?php foreach ($articles as $article) { ?>
+              <?php foreach ($filteredArticles as $article) { ?>
                 <div class="border border-gray-200 rounded-lg p-5 shadow-sm bg-gradient-to-r from-[#f4f6f3] to-[#e7e9e2] relative group">
                   <div class="flex items-center gap-2 mb-2">
                     <?php if (isset($article['role']) && $article['role'] === 'admin') { ?>
@@ -54,6 +77,19 @@ foreach ($allEditRequests as $req) {
                     <?php } ?>
 
                     <span class="font-semibold text-lg"><?php echo htmlspecialchars($article['title']); ?></span>
+                    <?php
+                      
+                      $categoryName = '';
+                      foreach ($categories as $category) {
+                        if ($category['category_id'] == $article['category_id']) {
+                          $categoryName = $category['name'];
+                          break;
+                        }
+                      }
+                    ?>
+                    <span class="font-semibold text-lg text-[#4b5b40]">| 
+                      <?php echo htmlspecialchars($categoryName); ?>
+                    </span>
 
                     <?php if ($article['is_active'] == 1) { ?>
                       <span class="ml-2 px-2 py-1 rounded text-xs font-bold bg-green-200 text-green-800">Active</span>
@@ -106,9 +142,19 @@ foreach ($allEditRequests as $req) {
                   <!-- Hidden edit form -->
                   <form action="../core/handleForms.php" method="POST" enctype="multipart/form-data" class="edit-article-form hidden mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <input type="hidden" name="edit_article_id" value="<?php echo $article['article_id']; ?>">
-                    <div class="mb-2">
-                      <label class="block text-sm font-medium text-gray-700">Title:</label>
-                      <input type="text" name="edit_title" value="<?php echo htmlspecialchars($article['title']); ?>" class="block w-full border border-gray-300 rounded-md p-2">
+                    <div class="mb-2 flex gap-2">
+                      <div class="flex-1/2">
+                        <label class="block text-sm font-medium text-gray-700">Title:</label>
+                        <input type="text" name="edit_title" value="<?php echo htmlspecialchars($article['title']); ?>" class="block w-full border border-gray-300 rounded-md p-2">
+                      </div>
+                      <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700">Category:</label>
+                        <select name="edit_category_id" class="block w-full border border-gray-300 rounded-md p-2">
+                          <?php foreach ($categories as $category) { ?>
+                            <option value="<?php echo $category['category_id']; ?>" <?php if ($category['category_id'] == $article['category_id']) echo 'selected'; ?>><?php echo htmlspecialchars($category['name']); ?></option>
+                          <?php } ?>
+                        </select>
+                      </div>
                     </div>
                     <div class="mb-2">
                       <label class="block text-sm font-medium text-gray-700">Content:</label>

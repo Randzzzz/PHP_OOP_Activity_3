@@ -1,3 +1,4 @@
+
 <?php  
 
 require_once 'database.php';
@@ -10,9 +11,9 @@ class Article extends Database {
      * @param int $author_id The ID of the author.
      * @return int The ID of the newly created article.
      */
-    public function createArticle($title, $content, $author_id) {
-        $sql = "INSERT INTO articles (title, content, author_id, is_active) VALUES (?, ?, ?, 0)";
-        return $this->executeNonQuery($sql, [$title, $content, $author_id]);
+    public function createArticle($title, $content, $category_id, $author_id) {
+        $sql = "INSERT INTO articles (title, content, category_id, author_id, is_active) VALUES (?, ?, ?, ?, 0)";
+        return $this->executeNonQuery($sql, [$title, $content, $category_id, $author_id]);
     }
 
     /**
@@ -23,12 +24,12 @@ class Article extends Database {
      * @param string|null $image_url
      * @return int
      */
-    public function createArticleWithImage($title, $content, $author_id, $image_url = null) {
+    public function createArticleWithImage($title, $content, $category_id, $author_id, $image_url = null) {
         if ($image_url) {
-            $sql = "INSERT INTO articles (title, content, author_id, image_url, is_active) VALUES (?, ?, ?, ?, 0)";
-            return $this->executeNonQuery($sql, [$title, $content, $author_id, $image_url]);
+            $sql = "INSERT INTO articles (title, content, category_id, author_id, image_url, is_active) VALUES (?, ?, ?, ?, ?, 0)";
+            return $this->executeNonQuery($sql, [$title, $content, $category_id, $author_id, $image_url]);
         } else {
-            return $this->createArticle($title, $content, $author_id);
+            return $this->createArticle($title, $content, $category_id, $author_id);
         }
     }
 
@@ -63,6 +64,18 @@ class Article extends Database {
         return $this->executeQuery($sql);
     }
 
+    /**
+     * Get all active articles by category
+     * @param int $category_id
+     * @return array
+     */
+    public function getActiveArticlesByCategory($category_id) {
+        $sql = "SELECT * FROM articles 
+                JOIN users ON articles.author_id = users.user_id 
+                WHERE is_active = 1 AND category_id = ? ORDER BY articles.created_at DESC";
+        return $this->executeQuery($sql, [$category_id]);
+    }
+
     public function getArticlesByUserID($user_id) {
         $sql = "SELECT * FROM articles 
                 JOIN users ON 
@@ -92,10 +105,16 @@ class Article extends Database {
      * @param string|null $image_url
      * @return int Number of affected rows
      */
-    public function updateArticleAdmin($id, $title, $content, $status, $image_url = null) {
-        if ($image_url) {
+    public function updateArticle($id, $title, $content, $status, $image_url = null, $category_id = null) {
+        if ($image_url && $category_id !== null) {
+            $sql = "UPDATE articles SET title = ?, content = ?, image_url = ?, is_active = ?, category_id = ? WHERE article_id = ?";
+            return $this->executeNonQuery($sql, [$title, $content, $image_url, $status, $category_id, $id]);
+        } elseif ($image_url) {
             $sql = "UPDATE articles SET title = ?, content = ?, image_url = ?, is_active = ? WHERE article_id = ?";
             return $this->executeNonQuery($sql, [$title, $content, $image_url, $status, $id]);
+        } elseif ($category_id !== null) {
+            $sql = "UPDATE articles SET title = ?, content = ?, is_active = ?, category_id = ? WHERE article_id = ?";
+            return $this->executeNonQuery($sql, [$title, $content, $status, $category_id, $id]);
         } else {
             $sql = "UPDATE articles SET title = ?, content = ?, is_active = ? WHERE article_id = ?";
             return $this->executeNonQuery($sql, [$title, $content, $status, $id]);
@@ -142,5 +161,6 @@ class Article extends Database {
         $sql = "UPDATE articles SET is_active = -1 WHERE article_id = ?";
         return $this->executeNonQuery($sql, [$article_id]);
     }
+
 }
 ?>

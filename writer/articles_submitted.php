@@ -9,16 +9,18 @@ $allArticles = $articleObj->getArticles();
 $myEditRequests = $editRequestObj->getRequestsForAuthor($user_id);
 $userRequests = $editRequestObj->getRequestsByWriter($user_id); // Get all requests made by this user
 
-$articles = array_filter($allArticles, function($a) { 
-  return isset($a['is_active']) && $a['is_active'] != -1; 
-});
-
 $editRequestsByArticle = [];
 foreach ($myEditRequests as $req) {
     $editRequestsByArticle[$req['article_id']][] = $req;
 }
 
 $userRequestedArticleIds = array_column($userRequests, 'article_id');
+
+$categories = $categoryObj->getAllCategories();
+$selectedCategory = isset($_GET['category']) ? intval($_GET['category']) : 0;
+$articles = array_filter($allArticles, function($a) {
+  return isset($a['is_active']) && $a['is_active'] != -1;
+});
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,13 +48,33 @@ $userRequestedArticleIds = array_column($userRequests, 'article_id');
         </div>
 
         <div class="bg-white rounded-xl shadow p-6">
-          <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">🗂️ All Submitted Articles</h2>
-          <?php if (empty($articles)) { ?>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">🗂️ All Submitted Articles</h2>
+            <form method="get" class="flex items-center gap-2">
+              <label for="category" class="text-sm font-medium text-gray-700">Category:</label>
+              <select name="category" id="category" class="border border-gray-300 rounded-md p-2" onchange="this.form.submit()">
+                <option value="0">All</option>
+                <?php foreach ($categories as $category) { ?>
+                  <option value="<?php echo $category['category_id']; ?>" <?php if ($selectedCategory == $category['category_id']) echo 'selected'; ?>><?php echo htmlspecialchars($category['name']); ?></option>
+                <?php } ?>
+              </select>
+            </form>
+          </div>
+          <?php
+            // Filter articles by selected category if not 'All'
+            $filteredArticles = $articles;
+            if ($selectedCategory > 0) {
+              $filteredArticles = array_filter($articles, function($a) use ($selectedCategory) {
+                return $a['category_id'] == $selectedCategory;
+              });
+            }
+          ?>
+          <?php if (empty($filteredArticles)) { ?>
             <p class="text-gray-500">No articles found.</p>
           <?php } else { ?>
 
             <div class="space-y-6">
-            <?php foreach ($articles as $article) { ?>
+            <?php foreach ($filteredArticles as $article) { ?>
               <div class="border border-gray-200 rounded-lg p-5 shadow-sm bg-gradient-to-r from-[#f4f6f3] to-[#e7e9e2] relative group">
                 <div class="flex items-center gap-2 mb-2">
                   <?php if (isset($article['role']) && $article['role'] === 'admin') { ?>
@@ -62,6 +84,16 @@ $userRequestedArticleIds = array_column($userRequests, 'article_id');
                   <?php } ?>
 
                   <span class="font-semibold text-lg"><?php echo htmlspecialchars($article['title']); ?></span>
+                  <?php
+                    $categoryName = '';
+                    foreach ($categories as $category) {
+                      if ($category['category_id'] == $article['category_id']) {
+                        $categoryName = $category['name'];
+                        break;
+                      }
+                    }
+                  ?>
+                  <span class="font-semibold text-lg text-[#4b5b40]">| <?php echo htmlspecialchars($categoryName); ?></span>
                   <span class="ml-2 px-2 py-1 rounded text-xs font-bold <?php echo ($article['is_active'] ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-700'); ?>">
                     <?php echo ($article['is_active'] ? 'Active' : 'Pending'); ?>
                   </span>

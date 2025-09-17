@@ -104,11 +104,12 @@ function uploadArticleImage($fileInputName = 'article_image') {
 if ((isset($_POST['insertAdminArticleBtn']) && $userObj->isAdmin()) || (isset($_POST['insertWriterArticleBtn']) && !$userObj->isAdmin())) {
 	$title = trim($_POST['title']);
 	$content = trim($_POST['description']);
+	$category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : null;
 	$author_id = $_SESSION['user_id'];
 	$image_url = null;
 
 	$image_url = uploadArticleImage('article_image');
-	$success = $articleObj->createArticleWithImage($title, $content, $author_id, $image_url);
+	$success = $articleObj->createArticleWithImage($title, $content, $category_id, $author_id, $image_url);
 	if ($userObj->isAdmin()) {
 		$_SESSION['message'] = $success ? "Article posted successfully!" : "Failed to post article.";
 		$_SESSION['status'] = $success ? '200' : '400';
@@ -161,11 +162,10 @@ if (isset($_POST['editArticleAdminBtn']) && $userObj->isAdmin()) {
 	$title = trim($_POST['edit_title']);
 	$content = trim($_POST['edit_content']);
 	$status = isset($_POST['edit_status']) ? intval($_POST['edit_status']) : 0;
-	$image_url = null;
-
+	$category_id = isset($_POST['edit_category_id']) ? intval($_POST['edit_category_id']) : null;
 	$image_url = uploadArticleImage('edit_image');
 
-	$result = $articleObj->updateArticleAdmin($article_id, $title, $content, $status, $image_url);
+	$result = $articleObj->updateArticle($article_id, $title, $content, $status, $image_url, $category_id);
 
 	if ($result) {
 		$_SESSION['message'] = "Article updated successfully!";
@@ -222,27 +222,27 @@ if (isset($_POST['editOwnArticleBtn']) && !$userObj->isAdmin()) {
 	$article_id = intval($_POST['edit_own_article_id']);
 	$title = trim($_POST['edit_title']);
 	$content = trim($_POST['edit_content']);
-	$image_url = null;
+	$category_id = isset($_POST['edit_category_id']) ? intval($_POST['edit_category_id']) : null;
 	$image_url = uploadArticleImage('edit_image');
 
 	// allow update if the logged-in user is the author
 	$article = $articleObj->getArticles($article_id);
 	if ($article && $article['author_id'] == $_SESSION['user_id']) {
 		// Always set status to pending 
-		$result = $articleObj->updateArticleAdmin($article_id, $title,$content, 0, $image_url); 
+		$result = $articleObj->updateArticle($article_id, $title, $content, 0, $image_url, $category_id); 
 		if ($result) {
 			$_SESSION['message'] = "Your article was updated and is pending admin approval.";
 			$_SESSION['status'] = '200';
 		} else {
 			$_SESSION['message'] = "Failed to update your article.";
 			$_SESSION['status'] = '400';
-			}
-		} else {
-			$_SESSION['message'] = "You do not have permission to edit this article.";
-			$_SESSION['status'] = '400';
 		}
-		header("Location: ../writer/index.php");
-		exit();
+	} else {
+		$_SESSION['message'] = "You do not have permission to edit this article.";
+		$_SESSION['status'] = '400';
+	}
+	header("Location: ../writer/index.php");
+	exit();
 }
 
 // Writer requests edit access for an article
@@ -332,8 +332,7 @@ if (isset($_POST['editSharedArticleBtn']) && !$userObj->isAdmin()) {
 	$article_id = intval($_POST['edit_shared_article_id']);
 	$title = trim($_POST['edit_title']);
 	$content = trim($_POST['edit_content']);
-	$image_url = null;
-
+	$category_id = isset($_POST['edit_category_id']) ? intval($_POST['edit_category_id']) : null;
 	$image_url = uploadArticleImage('edit_image');
 
 	// Only allow update if the article is shared
@@ -346,7 +345,7 @@ if (isset($_POST['editSharedArticleBtn']) && !$userObj->isAdmin()) {
 		}
 	}
 	if ($canEdit) {
-		$result = $articleObj->updateArticleAdmin($article_id, $title, $content, 1, $image_url);
+		$result = $articleObj->updateArticle($article_id, $title, $content, 1, $image_url, $category_id);
 		if ($result) {
 			$_SESSION['message'] = "Shared article updated successfully!";
 			$_SESSION['status'] = '200';
@@ -359,6 +358,51 @@ if (isset($_POST['editSharedArticleBtn']) && !$userObj->isAdmin()) {
 		$_SESSION['status'] = '400';
 	}
 	header("Location: ../writer/shared_articles.php");
+	exit();
+}
+
+	// admin category management
+	if (isset($_POST['addCategoryBtn'])) {
+  $categoryName = trim($_POST['category_name']);
+  if ($categoryName !== '') {
+    if ($categoryObj->createCategory($categoryName)) {
+      $_SESSION['message'] = "Category added!";
+			$_SESSION['status'] = '200';
+    } else {
+      $_SESSION['message'] = "Failed to add category.";
+			$_SESSION['status'] = '400';
+    }
+  }
+	header("Location: ../admin/set_category.php");
+	exit();
+}
+if (isset($_POST['updateCategoryBtn'])) {
+  $categoryId = intval($_POST['edit_category_id']);
+  $categoryName = trim($_POST['edit_category_name']);
+  if ($categoryId && $categoryName !== '') {
+    if ($categoryObj->updateCategory($categoryId, $categoryName)) {
+      $_SESSION['message'] = "Category updated!";
+			$_SESSION['status'] = '200';
+    } else {
+      $_SESSION['message'] = "Failed to update category.";
+			$_SESSION['status'] = '400';
+    }
+  }
+	header("Location: ../admin/set_category.php");
+	exit();
+}
+if (isset($_POST['deleteCategoryBtn'])) {
+  $categoryId = intval($_POST['delete_category_id']);
+  if ($categoryId) {
+    if ($categoryObj->deleteCategory($categoryId)) {
+      $_SESSION['message'] = "Category deleted!";
+			$_SESSION['status'] = '200';
+    } else {
+      $_SESSION['message'] = "Failed to delete category.";
+			$_SESSION['status'] = '400';
+    }
+  }
+	header("Location: ../admin/set_category.php");
 	exit();
 }
 ?>

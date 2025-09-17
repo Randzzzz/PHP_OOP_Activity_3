@@ -9,6 +9,10 @@
       class="text-white hover:text-[#cdd4c6] transition-colors duration-200 flex items-center gap-1">
       <span>Home</span>
     </a>
+    <a href="set_category.php"
+      class="text-white hover:text-[#cdd4c6] transition-colors duration-200 flex items-center gap-1">
+      <span>Manage Categories</span>
+    </a>
     <a href="articles_from_students.php"
       class="text-white hover:text-[#cdd4c6] transition-colors duration-200 flex items-center gap-1">
       <span>Pending Articles</span>

@@ -10,6 +10,7 @@ $allSharedArticles = $editRequestObj->getSharedArticles($user_id);
 $sharedArticles = array_filter($allSharedArticles, function($a) {
 	return isset($a['is_active']) && $a['is_active'] != -1;
 });
+$categories = $categoryObj->getAllCategories();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,6 +52,18 @@ $sharedArticles = array_filter($allSharedArticles, function($a) {
 																		<span class="inline-flex items-center px-2 py-1 bg-[#cdd4c6] text-[#283123] rounded text-xs font-bold mr-2">✒️ Writer</span>
 																	<?php } ?>
 										<span class="font-semibold text-lg"><?php echo htmlspecialchars($article['title']); ?></span>
+										<?php
+										$categoryName = '';
+										if (isset($categories) && is_array($categories)) {
+											foreach ($categories as $category) {
+												if ($category['category_id'] == $article['category_id']) {
+													$categoryName = $category['name'];
+													break;
+												}
+											}
+										}
+									?>
+									<span class="font-semibold text-lg text-[#4b5b40]">| <?php echo htmlspecialchars($categoryName); ?></span>
 										<span class="ml-2 px-2 py-1 rounded text-xs font-bold <?php echo ($article['is_active'] ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-700'); ?>">
 											<?php echo ($article['is_active'] ? 'Active' : 'Pending'); ?>
 										</span>
@@ -70,9 +83,15 @@ $sharedArticles = array_filter($allSharedArticles, function($a) {
 									<button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded shadow flex items-center gap-1 text-sm edit-shared-article-btn">Edit</button>
 									<form action="../core/handleForms.php" method="POST" enctype="multipart/form-data" class="edit-shared-article-form hidden mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
 										<input type="hidden" name="edit_shared_article_id" value="<?php echo $article['article_id']; ?>">
-										<div class="mb-2">
-											<label class="block text-sm font-medium text-gray-700">Title:</label>
+										<label class="block text-sm font-medium text-gray-700">Title:</label>
+										<div class="flex gap-2">
 											<input type="text" name="edit_title" value="<?php echo htmlspecialchars($article['title']); ?>" class="block w-full border border-gray-300 rounded-md p-2">
+											<select name="edit_category_id" required class="border border-gray-300 rounded-md p-2">
+                      <option value="">Select Category</option>
+                      <?php foreach ($categories as $category) { ?>
+                        <option value="<?php echo $category['category_id']; ?>" <?php if ($category['category_id'] == $article['category_id']) echo 'selected'; ?>><?php echo htmlspecialchars($category['name']); ?></option>
+                      <?php } ?>
+                    </select>
 										</div>
 										<div class="mb-2">
 											<label class="block text-sm font-medium text-gray-700">Content:</label>

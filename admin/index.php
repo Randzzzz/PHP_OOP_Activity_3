@@ -9,7 +9,9 @@ if (!$userObj->isAdmin()) {
   exit();
 }
 $adminName = isset($_SESSION['first_name']) ? $_SESSION['first_name'] : 'Admin';
-$articles = $articleObj->getActiveArticles();
+$categories = $categoryObj->getAllCategories();
+$selectedCategory = isset($_GET['category']) ? intval($_GET['category']) : 0;
+$articles = $selectedCategory ? $articleObj->getActiveArticlesByCategory($selectedCategory) : $articleObj->getActiveArticles();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -37,8 +39,16 @@ $articles = $articleObj->getActiveArticles();
         <div class="bg-white rounded-xl shadow p-6 mb-10">
           <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">📝 Post a New Article</h2>
           <form action="../core/handleForms.php" method="POST" enctype="multipart/form-data" class="space-y-4">
-            <input type="text" name="title" required placeholder="Input title here" class="block w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring focus:border-blue-300">
-            <textarea name="description" required placeholder="Message as admin" class="block w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring focus:border-blue-300"></textarea>
+            <div class="flex gap-2">
+              <input type="text" name="title" required placeholder="Input title here" class="flex-1 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring focus:border-blue-300">
+              <select name="category_id" required class="border border-gray-300 rounded-md p-2">
+                <option value="">Select Category</option>
+                <?php foreach ($categories as $category) { ?>
+                  <option value="<?php echo $category['category_id']; ?>"><?php echo htmlspecialchars($category['name']); ?></option>
+                <?php } ?>
+              </select>
+            </div>
+            <textarea name="description" required placeholder="Content" class="block w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring focus:border-blue-300"></textarea>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Add an image:</label>
               <input type="file" name="article_image" accept="image/*" class="inline-block w-full text-sm text-gray-600 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring focus:border-blue-300">
@@ -49,7 +59,18 @@ $articles = $articleObj->getActiveArticles();
 
         <!-- Articles List -->
         <div class="bg-white rounded-xl shadow p-6">
-          <h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">📚 Active Articles</h2>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-semibold flex items-center gap-2">📚 Active Articles</h2>
+            <form method="get" class="flex items-center gap-2">
+              <label for="category" class="text-sm font-medium text-gray-700">Category:</label>
+              <select name="category" id="category" class="border border-gray-300 rounded-md p-2" onchange="this.form.submit()">
+                <option value="0">All</option>
+                <?php foreach ($categories as $category) { ?>
+                  <option value="<?php echo $category['category_id']; ?>" <?php if ($selectedCategory == $category['category_id']) echo 'selected'; ?>><?php echo htmlspecialchars($category['name']); ?></option>
+                <?php } ?>
+              </select>
+            </form>
+          </div>
           <?php if (empty($articles)) { ?>
             <p class="text-gray-500">No articles found.</p>
           <?php } else { ?>
@@ -63,6 +84,16 @@ $articles = $articleObj->getActiveArticles();
                     <span class="inline-flex items-center px-2 py-1 bg-[#cdd4c6] text-[#283123] rounded text-xs font-bold mr-2">✒️ Writer</span>
                   <?php } ?>
                   <span class="font-semibold text-lg"><?php echo htmlspecialchars($article['title']); ?></span>
+                  <?php
+                    $categoryName = '';
+                    foreach ($categories as $category) {
+                      if ($category['category_id'] == $article['category_id']) {
+                        $categoryName = $category['name'];
+                        break;
+                      }
+                    }
+                  ?>
+                  <span class="font-semibold text-lg text-[#4b5b40]">| <?php echo htmlspecialchars($categoryName); ?></span>
                 </div>
                 
                 <?php if (!empty($article['image_url'])) { ?>
