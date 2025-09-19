@@ -21,16 +21,6 @@ class Category extends Database {
         $sql = "SELECT * FROM categories ORDER BY name ASC";
         return $this->executeQuery($sql);
     }
-
-    /**
-     * 
-     * @param int $category_id
-     * @return array|null
-     */
-    public function getCategoryById($category_id) {
-        $sql = "SELECT * FROM categories WHERE category_id = ?";
-        return $this->executeQuerySingle($sql, [$category_id]);
-    }
     
     /**
      *
